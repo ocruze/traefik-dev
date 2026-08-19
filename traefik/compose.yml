@@ -1,46 +1,25 @@
 services:
-    mkcert:
-        image: vishnunair/docker-mkcert
-        container_name: mkcert
-        environment:
-            - domain=docker.localhost,*.docker.localhost
-        volumes:
-            - ./certs/:/root/.local/share/mkcert
-        labels:
-            - "traefik.enable=false"
-        networks:
-            - web_dev
-        restart: no
     traefik:
         image: traefik:v3.6
         container_name: traefik
-        #ports:
-        #    - "80:80"
-        #    - "443:443"
-        #     - "8080:8080"
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - $PWD/traefik.yml:/etc/traefik/traefik.yml
-            - $PWD/dynamic.yml:/etc/traefik/dynamic.yml
-            - $PWD/acme.json:/acme.json
-            - $PWD/certs:/etc/ssl
-            # - ./certs/:/etc/certs
         network_mode: 'host'
         userns_mode: 'host'
+        # ports: # if switching back from host networking
+        #     - "80:80"
+        #     - "443:443"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./traefik.yml:/etc/traefik/traefik.yml
+            - ./dynamic.yml:/etc/traefik/dynamic.yml
+            - ./certs/dev.pem:/etc/certs/dev.pem:ro
+            - ./certs/dev-key.pem:/etc/certs/dev-key.pem:ro
         restart: unless-stopped
-        #networks:
-        #    - web_dev
+        # networks:
+        #     - web_dev
         extra_hosts:
-            - host.docker.internal:host-gateway
-        depends_on:
-            - mkcert
+            - "host.docker.internal:host-gateway"
         labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.traefik.rule=Host(`docker.localhost`)"
-            - "traefik.http.routers.traefik.entrypoints=https"
-            - "traefik.http.routers.traefik.tls=true"
-            - "traefik.http.services.traefik.loadbalancer.server.port=8080"
-            - "traefik.http.routers.traefik.entrypoints=websecure"
+            - "traefik.enable=false" # dashboard router is in dynamic.yml (api@internal)
 
     mailcatcher:
         image: schickling/mailcatcher
@@ -59,11 +38,9 @@ services:
         networks:
             - web_dev
         restart: unless-stopped
+
     # kanboard:
     #   image: kanboard/kanboard:latest
-    #   # ports:
-    #   #   - "9999:80"
-    #   #   - "9991:443"
     #   volumes:
     #     - kanboard_data:/var/www/app/data
     #     - kanboard_plugins:/var/www/app/plugins
@@ -72,37 +49,37 @@ services:
     #     - "traefik.enable=true"
     #     - "traefik.http.routers.kanboard.rule=Host(`kanboard.docker.localhost`)"
     #     - "traefik.http.routers.kanboard.entrypoints=websecure"
+    #     - "traefik.http.services.kanboard.loadbalancer.server.port=80"
     #   networks:
     #     - web_dev
     #   restart: unless-stopped
 
-    portainer:
-        image: portainer/portainer-ce:latest
-        container_name: portainer
-        restart: always
-        # ports:
-        #     - "9000:9000"
-        #     - "9443:9443"
-        environment:
-            - http_port=9000
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - portainer_data:/data
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.portainer.rule=Host(`portainer.docker.localhost`)"
-            - "traefik.http.services.portainer.loadbalancer.server.port=9000"
-            - "traefik.http.routers.portainer.entrypoints=websecure"
-        networks:
-            - web_dev
+    # portainer:
+    #     image: portainer/portainer-ce:latest
+    #     container_name: portainer
+    #     restart: always
+    #     # ports:
+    #     #     - "9000:9000"
+    #     #     - "9443:9443"
+    #     environment:
+    #         - http_port=9000
+    #     volumes:
+    #         - /var/run/docker.sock:/var/run/docker.sock
+    #         - portainer_data:/data
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.portainer.rule=Host(`portainer.docker.localhost`)"
+    #         - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+    #         - "traefik.http.routers.portainer.entrypoints=websecure"
+    #     networks:
+    #         - web_dev
 
 networks:
     web_dev:
         external: true
-# volumes:
-#   kanboard_data:
-#   kanboard_plugins:
-#   kanboard_ssl:
 
-volumes:
-    portainer_data:
+# volumes:
+#     kanboard_data:
+#     kanboard_plugins:
+#     kanboard_ssl:
+#     portainer_data:
