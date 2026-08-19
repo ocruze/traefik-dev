@@ -1,6 +1,6 @@
 api:
     dashboard: true
-    insecure: true
+    insecure: false
 
 entryPoints:
     web:
@@ -14,8 +14,7 @@ entryPoints:
     websecure:
         address: ":443"
         http:
-            tls:
-                certResolver: "default"
+            tls: {}
 
 providers:
     docker:
@@ -26,13 +25,5 @@ providers:
         filename: "/etc/traefik/dynamic.yml"
         watch: true
 
-certificatesResolvers:
-    default:
-        acme:
-            email: "orka.cruze@ign.fr"
-            storage: "acme.json"
-            caServer: "https://acme-v01.api.letsencrypt.org/directory"
-            tlsChallenge: {}
-
 log:
-    level: "DEBUG"
+    level: "INFO"

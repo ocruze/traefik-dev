@@ -1,8 +1,35 @@
 tls:
     certificates:
-        - certFile: "/etc/ssl/docker.localhost.pem"
-          keyFile: "/etc/ssl/docker.localhost-key.pem"
-        - certFile: "/etc/ssl/_wildcard.docker.localhost.pem"
-          keyFile: "/etc/ssl/_wildcard.docker.localhost-key.pem"
-        - certFile: "/etc/ssl/rootCA.pem"
-          keyFile: "/etc/ssl/rootCA-key.pem"
+        - certFile: "/etc/certs/dev.pem"
+          keyFile: "/etc/certs/dev-key.pem"
+
+http:
+    routers:
+        dashboard:
+            rule: "Host(`docker.localhost`)"
+            entryPoints:
+                - "websecure"
+            tls: true
+            service: api@internal
+        vite:
+            rule: "Host(`vite.docker.localhost`)"
+            entryPoints:
+                - "websecure"
+            tls: true
+            service: vite
+        redirect-service:
+            rule: "Host(`test.docker.localhost`)"
+            entryPoints:
+                - "websecure"
+            tls: true
+            service: redirect-service
+
+    services:
+        vite:
+            loadBalancer:
+                servers:
+                    - url: "http://host.docker.internal:5173"
+        redirect-service:
+            loadBalancer:
+                servers:
+                    - url: "http://host.docker.internal:8082"
